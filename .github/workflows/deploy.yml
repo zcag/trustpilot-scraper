@@ -19,5 +19,5 @@ jobs:
           curl -s -X PUT \
             -H "Authorization: Bearer $APIFY_TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{"isPublic": true}' \
+            -d '{"isPublic": true, "categories": ["Business"]}' \
             "https://api.apify.com/v2/acts/${USERNAME}~${ACTOR_NAME}"
