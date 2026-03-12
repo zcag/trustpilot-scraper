@@ -1,5 +1,5 @@
-import { CheerioCrawler, Dataset, type CheerioAPI } from '@crawlee/cheerio';
-import { Actor, log } from 'apify';
+import { CheerioCrawler, type CheerioAPI } from '@crawlee/cheerio';
+import { Actor, Dataset, log } from 'apify';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -210,7 +210,7 @@ const crawler = new CheerioCrawler({
         const jsonLd = extractFromJsonLd($, companyDomain, companyBaseUrl);
 
         if (includeCompanyInfo && !companyInfoEmitted && jsonLd.companyInfo) {
-            await Dataset.pushData(jsonLd.companyInfo);
+            await Actor.pushData(jsonLd.companyInfo);
             companyInfoEmitted = true;
         }
 
@@ -228,9 +228,9 @@ const crawler = new CheerioCrawler({
             reviews = reviews.slice(0, remaining);
         }
 
-        // Push reviews
+        // Push reviews (PPE: charge per result)
         if (reviews.length > 0) {
-            await Dataset.pushData(reviews);
+            await Actor.pushData(reviews, 'result');
             reviewCount += reviews.length;
             log.info(`Pushed ${reviews.length} reviews (total: ${reviewCount}) for ${companyDomain}`);
         }
