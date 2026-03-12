@@ -14,8 +14,7 @@
                     "authorName",
                     "publishedDate",
                     "isVerified"
-                ],
-                "flatten": []
+                ]
             },
             "display": {
                 "component": "table",
