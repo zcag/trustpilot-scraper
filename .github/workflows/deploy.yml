@@ -31,7 +31,7 @@ jobs:
               "seoTitle": "Trustpilot Review Scraper - Extract Reviews & Ratings",
               "seoDescription": "Scrape Trustpilot reviews at scale. Extract ratings, review text, author info. JSON-LD extraction, no browser needed. $0.50 per 1,000 reviews.",
               "categories": ["LEAD_GENERATION", "ECOMMERCE", "SEO_TOOLS"],
-              "pictureUrl": "https://raw.githubusercontent.com/zcag/trustpilot-scraper/main/.actor/logo.svg"
+              "pictureUrl": "https://raw.githubusercontent.com/zcag/trustpilot-scraper/main/.actor/logo.png"
             }' \
             "https://api.apify.com/v2/acts/${USERNAME}~${ACTOR_NAME}")
           echo "$RESULT" | python3 -c "
