@@ -13,6 +13,28 @@ jobs:
         continue-on-error: true
         with:
           token: ${{ secrets.APIFY_TOKEN }}
+      - name: Set categories (does not require T&C)
+        if: always()
+        continue-on-error: true
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          ACTOR_NAME=$(python3 -c "import json; print(json.load(open('.actor/actor.json'))['name'])")
+          USERNAME=$(curl -s -H "Authorization: Bearer $APIFY_TOKEN" https://api.apify.com/v2/users/me | python3 -c "import sys,json; print(json.loads(sys.stdin.read())['data']['username'])")
+          echo "Setting categories for ${USERNAME}~${ACTOR_NAME}..."
+          RESULT=$(curl -s -X PUT \
+            -H "Authorization: Bearer $APIFY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"categories": ["LEAD_GENERATION", "ECOMMERCE", "SEO_TOOLS"]}' \
+            "https://api.apify.com/v2/acts/${USERNAME}~${ACTOR_NAME}")
+          echo "$RESULT" | python3 -c "
+          import sys,json
+          d=json.loads(sys.stdin.read())
+          if 'error' in d:
+              print('CATEGORIES ERROR:', d['error'].get('message','unknown'))
+          else:
+              print('CATEGORIES SET:', d.get('data',{}).get('categories','unknown'))
+          "
       - name: Make actor public
         if: always()
         env:
@@ -23,7 +45,7 @@ jobs:
           RESULT=$(curl -s -X PUT \
             -H "Authorization: Bearer $APIFY_TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{"isPublic": true, "categories": ["LEAD_GENERATION", "ECOMMERCE", "SEO_TOOLS"]}' \
+            -d '{"isPublic": true}' \
             "https://api.apify.com/v2/acts/${USERNAME}~${ACTOR_NAME}")
           echo "$RESULT" | python3 -c "
           import sys,json
