@@ -258,8 +258,8 @@ const crawler = new CheerioCrawler({
                     companyInfoEmitted,
                 },
             }]);
-        } else if (reviews.length > 0 && totalPages <= 1) {
-            // No pagination detected but we got reviews — try next page speculatively
+        } else if (reviews.length > 0 && totalPages <= 1 && currentPage < 100) {
+            // No pagination detected but we got reviews — try next page speculatively (capped at 100)
             const nextUrl = buildPageUrl(companyBaseUrl, currentPage + 1);
             await c.addRequests([{
                 url: nextUrl,
