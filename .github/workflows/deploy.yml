@@ -35,6 +35,27 @@ jobs:
           else:
               print('CATEGORIES SET:', d.get('data',{}).get('categories','unknown'))
           "
+      - name: Dump actor state (diagnostic)
+        if: always()
+        continue-on-error: true
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          ACTOR_NAME=$(python3 -c "import json; print(json.load(open('.actor/actor.json'))['name'])")
+          USERNAME=$(curl -s -H "Authorization: Bearer $APIFY_TOKEN" https://api.apify.com/v2/users/me | python3 -c "import sys,json; print(json.loads(sys.stdin.read())['data']['username'])")
+          curl -s -H "Authorization: Bearer $APIFY_TOKEN" \
+            "https://api.apify.com/v2/acts/${USERNAME}~${ACTOR_NAME}" | python3 -c "
+          import sys,json
+          d=json.loads(sys.stdin.read()).get('data',{})
+          fields = ['name','title','description','isPublic','categories','seoTitle','seoDescription','pictureUrl','restartOnError','versions']
+          for f in fields:
+              v = d.get(f, 'NOT SET')
+              if f == 'versions' and isinstance(v, list):
+                  v = f'{len(v)} version(s)'
+              print(f'{f}: {v}')
+          # Show all top-level keys
+          print('ALL KEYS:', sorted(d.keys()))
+          "
       - name: Make actor public (needs T&C acceptance in console first)
         id: publish
         if: always()
