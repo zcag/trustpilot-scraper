@@ -90,13 +90,22 @@ Schedule automatic runs to track review trends over time. Connect to Google Shee
 }
 ```
 
-## How much does it cost to scrape Trustpilot?
+## Pricing
 
-This Actor uses CheerioCrawler (HTTP requests only, no browser needed), making it very cost-efficient:
+Pay only for results — no monthly subscription, no compute charges.
 
-- **~$0.05-0.10 per 1,000 reviews** with datacenter proxy
+| Reviews | Cost |
+|---------|------|
+| 1,000 | $0.50 |
+| 5,000 | $2.50 |
+| 10,000 | $5.00 |
+| 50,000 | $25.00 |
 
-For example, scraping 10,000 reviews costs roughly $0.50-1.00 in platform usage. The Apify Free plan includes $5/month of credits — enough for tens of thousands of reviews.
+Platform usage (proxy, compute) is minimal — CheerioCrawler uses HTTP requests only, no browser needed. ~$0.05-0.10 per 1,000 reviews in platform costs on top of the per-result fee.
+
+## Try it free
+
+Every Apify account includes free credits. Set `maxReviewsPerCompany: 10` to preview the data format and verify it fits your workflow — no payment method required.
 
 ## Use cases
 
@@ -135,7 +144,18 @@ curl "https://api.apify.com/v2/acts/quasi_grass~trustpilot-review-scraper/run-sy
   -d '{"companyUrls": ["www.amazon.com"], "maxReviewsPerCompany": 100}'
 ```
 
-Or use the [Apify client](https://docs.apify.com/api/client/js/) for Node.js, Python, or any language. Works with Google Sheets, Zapier, Make, Slack, and 100+ integrations.
+```python
+from apify_client import ApifyClient
+
+client = ApifyClient("YOUR_TOKEN")
+run = client.actor("quasi_grass/trustpilot-review-scraper").call(
+    run_input={"companyUrls": ["www.amazon.com"], "maxReviewsPerCompany": 100}
+)
+for item in client.dataset(run["defaultDatasetId"]).iterate_items():
+    print(item)
+```
+
+Works with Google Sheets, Zapier, Make, Slack, and 100+ integrations via the [Apify platform](https://docs.apify.com/integrations).
 
 ## Technical details
 
