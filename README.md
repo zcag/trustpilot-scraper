@@ -4,10 +4,10 @@ Extract reviews, ratings, and company profile data from [Trustpilot.com](https:/
 
 ## What it does
 
-This scraper extracts structured data from Trustpilot company review pages, including:
+This scraper extracts structured data from Trustpilot company review pages:
 
-- **Reviews**: rating, title, full text, author info, dates, verification status, company replies
-- **Company profiles**: trust score, total reviews, star distribution, categories
+- **Reviews**: rating, title, full text, author name, dates, language
+- **Company profiles**: total reviews, average rating, star distribution
 
 ## Input
 
@@ -48,11 +48,8 @@ This scraper extracts structured data from Trustpilot company review pages, incl
     "reviewTitle": "Terrible customer service",
     "reviewText": "I ordered a product that never arrived...",
     "authorName": "John D.",
-    "authorCountry": "US",
     "publishedDate": "2026-03-10T14:23:45.000Z",
-    "experienceDate": "2026-03-05T00:00:00.000Z",
-    "isVerified": true,
-    "companyReply": "We're sorry to hear about your experience.",
+    "language": "en",
     "reviewUrl": "https://www.trustpilot.com/reviews/62d02e3a..."
 }
 ```
@@ -64,18 +61,15 @@ This scraper extracts structured data from Trustpilot company review pages, incl
     "type": "companyInfo",
     "companyName": "Amazon",
     "companyDomain": "www.amazon.com",
-    "trustScore": 1.7,
     "totalReviews": 44357,
     "averageRating": 1.7,
-    "starDistribution": { "1": 29069, "2": 2845, "3": 1923, "4": 1925, "5": 8595 },
-    "categories": ["Electronics", "Shopping"],
-    "isClaimedProfile": true
+    "starDistribution": { "1": 29069, "2": 2845, "3": 1923, "4": 1925, "5": 8595 }
 }
 ```
 
 ## How it works
 
-1. **Fast JSON extraction**: Reads structured data directly from Trustpilot's internal data (no slow HTML parsing)
+1. **JSON-LD extraction**: Reads structured review data from Trustpilot's embedded schema markup (20 reviews per page)
 2. **Automatic pagination**: Follows all review pages up to your `maxReviewsPerCompany` limit
 3. **Proxy rotation**: Uses Apify Proxy to avoid rate limiting
 4. **Multiple companies**: Scrape reviews for many companies in a single run

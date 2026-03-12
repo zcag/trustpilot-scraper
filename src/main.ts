@@ -17,20 +17,12 @@ interface ReviewResult {
     companyName: string;
     companyDomain: string;
     companyUrl: string;
-    reviewId: string;
     rating: number;
     reviewTitle: string;
     reviewText: string;
     authorName: string;
-    authorCountry: string;
-    authorReviewCount: number;
     publishedDate: string;
-    experienceDate: string;
-    isVerified: boolean;
     language: string;
-    likesCount: number;
-    companyReply: string | null;
-    companyReplyDate: string | null;
     reviewUrl: string;
 }
 
@@ -39,12 +31,9 @@ interface CompanyResult {
     companyName: string;
     companyDomain: string;
     companyUrl: string;
-    trustScore: number;
     totalReviews: number;
     averageRating: number;
     starDistribution: Record<string, number>;
-    categories: string[];
-    isClaimedProfile: boolean;
 }
 
 interface UserData {
@@ -79,14 +68,11 @@ const proxyConfiguration = await Actor.createProxyConfiguration(proxyConfig);
 
 function normalizeCompanyUrl(input: string): string {
     if (input.startsWith('http')) {
-        // Extract domain from full URL and rebuild to ensure consistency
         const url = new URL(input);
         const pathParts = url.pathname.split('/').filter(Boolean);
-        // Handle both /review/domain and bare domain inputs
         const domain = pathParts[pathParts.length - 1] || url.hostname;
         return `https://www.trustpilot.com/review/${domain}`;
     }
-    // Bare domain
     return `https://www.trustpilot.com/review/${input}`;
 }
 
@@ -103,91 +89,7 @@ function buildPageUrl(baseUrl: string, page: number): string {
     return url.href;
 }
 
-// ── Extraction: __NEXT_DATA__ (primary) ────────────────────────────────
-
-function extractFromNextData($: CheerioAPI): {
-    reviews: any[];
-    companyInfo: any;
-    filters: any;
-    totalPages: number;
-} | null {
-    try {
-        const scriptTag = $('script#__NEXT_DATA__');
-        if (!scriptTag.length) return null;
-
-        const json = JSON.parse(scriptTag.html() || '{}');
-        const pageProps = json?.props?.pageProps;
-        if (!pageProps) return null;
-
-        const reviews = pageProps.reviews || [];
-        const businessUnit = pageProps.businessUnit || {};
-        const filters = pageProps.filters || {};
-
-        const totalPages = filters.pagination?.totalPages
-            || pageProps.pagination?.totalPages
-            || Math.ceil((businessUnit.numberOfReviews || 0) / 20)
-            || 1;
-
-        return { reviews, companyInfo: businessUnit, filters, totalPages };
-    } catch (e) {
-        log.debug(`__NEXT_DATA__ parsing failed: ${(e as Error).message}`);
-        return null;
-    }
-}
-
-function mapNextDataReview(review: any, companyName: string, companyDomain: string, companyUrl: string): ReviewResult {
-    const consumer = review.consumer || {};
-    const dates = review.dates || {};
-    const reply = review.reply || review.companyReply || null;
-    const labels = review.labels || {};
-
-    return {
-        type: 'review',
-        companyName,
-        companyDomain,
-        companyUrl,
-        reviewId: review.id || '',
-        rating: review.rating || 0,
-        reviewTitle: review.title || '',
-        reviewText: review.text || '',
-        authorName: consumer.displayName || '',
-        authorCountry: consumer.countryCode || consumer.displayLocation || '',
-        authorReviewCount: consumer.numberOfReviews || 0,
-        publishedDate: dates.publishedDate || review.createdAt || '',
-        experienceDate: dates.experiencedDate || '',
-        isVerified: labels?.verification?.isVerified || false,
-        language: review.language || '',
-        likesCount: review.likes || 0,
-        companyReply: reply?.text || reply?.message || null,
-        companyReplyDate: reply?.createdAt || reply?.publishedDate || null,
-        reviewUrl: review.id ? `https://www.trustpilot.com/reviews/${review.id}` : '',
-    };
-}
-
-function mapNextDataCompany(bu: any, filters: any, companyDomain: string, companyUrl: string): CompanyResult {
-    // Star distribution is in filters.reviewStatistics.ratings
-    const ratings = filters?.reviewStatistics?.ratings || {};
-    return {
-        type: 'companyInfo',
-        companyName: bu.displayName || bu.name || companyDomain,
-        companyDomain,
-        companyUrl,
-        trustScore: bu.trustScore || 0,
-        totalReviews: bu.numberOfReviews || 0,
-        averageRating: bu.stars || 0,
-        starDistribution: {
-            '1': ratings.one || 0,
-            '2': ratings.two || 0,
-            '3': ratings.three || 0,
-            '4': ratings.four || 0,
-            '5': ratings.five || 0,
-        },
-        categories: (bu.categories || []).map((c: any) => c.displayName || c.name || c),
-        isClaimedProfile: bu.isClaimed || false,
-    };
-}
-
-// ── Extraction: JSON-LD (fallback) ─────────────────────────────────────
+// ── Extraction: JSON-LD (primary) ──────────────────────────────────────
 
 function extractFromJsonLd($: CheerioAPI, companyDomain: string, companyUrl: string): {
     reviews: ReviewResult[];
@@ -195,13 +97,13 @@ function extractFromJsonLd($: CheerioAPI, companyDomain: string, companyUrl: str
 } {
     const reviews: ReviewResult[] = [];
     let companyInfo: CompanyResult | null = null;
+    const starDistribution: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
 
     $('script[type="application/ld+json"]').each((_, el) => {
         try {
             const data = JSON.parse($(el).html() || '{}');
-
-            // Handle @graph arrays
             const items = data['@graph'] || [data];
+
             for (const item of items) {
                 if (item['@type'] === 'LocalBusiness' || item['@type'] === 'Organization') {
                     const agg = item.aggregateRating || {};
@@ -210,13 +112,26 @@ function extractFromJsonLd($: CheerioAPI, companyDomain: string, companyUrl: str
                         companyName: item.name || companyDomain,
                         companyDomain,
                         companyUrl,
-                        trustScore: 0,
                         totalReviews: parseInt(agg.reviewCount) || 0,
                         averageRating: parseFloat(agg.ratingValue) || 0,
-                        starDistribution: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
-                        categories: [],
-                        isClaimedProfile: false,
+                        starDistribution,
                     };
+                }
+
+                // Dataset type contains rating distribution
+                if (item['@type'] === 'Dataset' && item.distribution) {
+                    for (const dist of item.distribution) {
+                        const name = dist.name || '';
+                        const match = name.match(/(\d)\s*star/i);
+                        if (match) {
+                            const stars = match[1];
+                            // Try to get count from description or other fields
+                            const descMatch = (dist.description || '').match(/(\d[\d,]*)/);
+                            if (descMatch) {
+                                starDistribution[stars] = parseInt(descMatch[1].replace(/,/g, '')) || 0;
+                            }
+                        }
+                    }
                 }
 
                 if (item['@type'] === 'Review') {
@@ -225,21 +140,13 @@ function extractFromJsonLd($: CheerioAPI, companyDomain: string, companyUrl: str
                         companyName: '',
                         companyDomain,
                         companyUrl,
-                        reviewId: '',
                         rating: parseInt(item.reviewRating?.ratingValue) || 0,
                         reviewTitle: item.headline || '',
                         reviewText: item.reviewBody || '',
                         authorName: item.author?.name || '',
-                        authorCountry: '',
-                        authorReviewCount: 0,
                         publishedDate: item.datePublished || '',
-                        experienceDate: '',
-                        isVerified: false,
                         language: item.inLanguage || '',
-                        likesCount: 0,
-                        companyReply: null,
-                        companyReplyDate: null,
-                        reviewUrl: '',
+                        reviewUrl: item.url || '',
                     });
                 }
             }
@@ -258,19 +165,27 @@ function extractFromJsonLd($: CheerioAPI, companyDomain: string, companyUrl: str
     return { reviews, companyInfo };
 }
 
-// ── Extraction: HTML (last resort) ─────────────────────────────────────
+// ── Pagination: HTML-based detection ───────────────────────────────────
 
 function extractTotalPagesFromHtml($: CheerioAPI): number {
     // Look for pagination nav
     const lastPageLink = $('nav[aria-label="Pagination"] a').last().text().trim();
     if (lastPageLink && !isNaN(Number(lastPageLink))) return parseInt(lastPageLink);
 
-    // Alternative: look for pagination button with highest number
+    // Look for pagination buttons with numbers
     let maxPage = 1;
-    $('a[name^="pagination-button-"]').each((_, el) => {
+    $('a[name^="pagination-button-"], a[href*="page="]').each((_, el) => {
         const text = $(el).text().trim();
         const num = parseInt(text);
         if (!isNaN(num) && num > maxPage) maxPage = num;
+
+        // Also check href for page= parameter
+        const href = $(el).attr('href') || '';
+        const hrefMatch = href.match(/page=(\d+)/);
+        if (hrefMatch) {
+            const hrefPage = parseInt(hrefMatch[1]);
+            if (hrefPage > maxPage) maxPage = hrefPage;
+        }
     });
 
     return maxPage;
@@ -291,43 +206,20 @@ const crawler = new CheerioCrawler({
 
         log.info(`Processing ${request.url} (${reviewCount} reviews so far for ${companyDomain})`);
 
-        // Try __NEXT_DATA__ first
-        const nextData = extractFromNextData($);
+        // Extract from JSON-LD (primary path)
+        const jsonLd = extractFromJsonLd($, companyDomain, companyBaseUrl);
 
-        let reviews: ReviewResult[] = [];
-        let totalPages = 1;
-
-        if (nextData && nextData.reviews.length > 0) {
-            // Primary extraction path
-            const companyName = nextData.companyInfo?.displayName || nextData.companyInfo?.name || companyDomain;
-
-            // Emit company info once
-            if (includeCompanyInfo && !companyInfoEmitted && nextData.companyInfo) {
-                const info = mapNextDataCompany(nextData.companyInfo, nextData.filters, companyDomain, companyBaseUrl);
-                await Dataset.pushData(info);
-                companyInfoEmitted = true;
-            }
-
-            reviews = nextData.reviews.map((r: any) =>
-                mapNextDataReview(r, companyName, companyDomain, companyBaseUrl)
-            );
-            totalPages = nextData.totalPages;
-
-            log.info(`[__NEXT_DATA__] Found ${reviews.length} reviews, ${totalPages} total pages`);
-        } else {
-            // Fallback to JSON-LD
-            const jsonLd = extractFromJsonLd($, companyDomain, companyBaseUrl);
-
-            if (includeCompanyInfo && !companyInfoEmitted && jsonLd.companyInfo) {
-                await Dataset.pushData(jsonLd.companyInfo);
-                companyInfoEmitted = true;
-            }
-
-            reviews = jsonLd.reviews;
-            totalPages = extractTotalPagesFromHtml($);
-
-            log.info(`[JSON-LD] Found ${reviews.length} reviews, ${totalPages} total pages`);
+        if (includeCompanyInfo && !companyInfoEmitted && jsonLd.companyInfo) {
+            await Dataset.pushData(jsonLd.companyInfo);
+            companyInfoEmitted = true;
         }
+
+        let reviews = jsonLd.reviews;
+
+        // Try HTML pagination detection
+        let totalPages = extractTotalPagesFromHtml($);
+
+        log.info(`[JSON-LD] Found ${reviews.length} reviews, ${totalPages} total pages detected`);
 
         // Trim to maxReviews limit
         if (maxReviewsPerCompany > 0) {
@@ -354,6 +246,7 @@ const crawler = new CheerioCrawler({
         const currentPage = parseInt(currentUrl.searchParams.get('page') || '1');
 
         if (currentPage < totalPages) {
+            // Known total pages — enqueue next
             const nextUrl = buildPageUrl(companyBaseUrl, currentPage + 1);
             await c.addRequests([{
                 url: nextUrl,
@@ -365,8 +258,22 @@ const crawler = new CheerioCrawler({
                     companyInfoEmitted,
                 },
             }]);
+        } else if (reviews.length > 0 && totalPages <= 1) {
+            // No pagination detected but we got reviews — try next page speculatively
+            const nextUrl = buildPageUrl(companyBaseUrl, currentPage + 1);
+            await c.addRequests([{
+                url: nextUrl,
+                userData: {
+                    label: 'REVIEW_PAGE' as const,
+                    companyDomain,
+                    companyBaseUrl,
+                    reviewCount,
+                    companyInfoEmitted,
+                },
+            }]);
+            log.info(`Speculatively trying page ${currentPage + 1} (total pages unknown)`);
         } else {
-            log.info(`Finished all ${totalPages} pages for ${companyDomain} (${reviewCount} reviews total)`);
+            log.info(`Finished all pages for ${companyDomain} (${reviewCount} reviews total)`);
         }
     },
 
