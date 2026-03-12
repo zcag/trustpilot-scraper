@@ -13,7 +13,7 @@ jobs:
         continue-on-error: true
         with:
           token: ${{ secrets.APIFY_TOKEN }}
-      - name: Set categories (does not require T&C)
+      - name: Set publication metadata
         if: always()
         continue-on-error: true
         env:
@@ -21,40 +21,32 @@ jobs:
         run: |
           ACTOR_NAME=$(python3 -c "import json; print(json.load(open('.actor/actor.json'))['name'])")
           USERNAME=$(curl -s -H "Authorization: Bearer $APIFY_TOKEN" https://api.apify.com/v2/users/me | python3 -c "import sys,json; print(json.loads(sys.stdin.read())['data']['username'])")
-          echo "Setting categories for ${USERNAME}~${ACTOR_NAME}..."
+          echo "Setting metadata for ${USERNAME}~${ACTOR_NAME}..."
           RESULT=$(curl -s -X PUT \
             -H "Authorization: Bearer $APIFY_TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{"categories": ["LEAD_GENERATION", "ECOMMERCE", "SEO_TOOLS"]}' \
+            -d '{
+              "title": "Trustpilot Reviews Scraper API | $0.50/1K Reviews",
+              "description": "Scrape Trustpilot reviews, ratings, and company profiles. Extract star ratings, review text, author info, and aggregate statistics. Fast JSON-LD extraction — no browser needed. Pay only for results.",
+              "seoTitle": "Trustpilot Review Scraper - Extract Reviews & Ratings",
+              "seoDescription": "Scrape Trustpilot reviews at scale. Extract ratings, review text, author info. JSON-LD extraction, no browser needed. $0.50 per 1,000 reviews.",
+              "categories": ["LEAD_GENERATION", "ECOMMERCE", "SEO_TOOLS"]
+            }' \
             "https://api.apify.com/v2/acts/${USERNAME}~${ACTOR_NAME}")
           echo "$RESULT" | python3 -c "
           import sys,json
           d=json.loads(sys.stdin.read())
           if 'error' in d:
-              print('CATEGORIES ERROR:', d['error'].get('message','unknown'))
+              print('METADATA ERROR:', d['error'].get('message','unknown'))
           else:
-              print('CATEGORIES SET:', d.get('data',{}).get('categories','unknown'))
-          "
-      - name: Dump actor state (diagnostic)
-        if: always()
-        continue-on-error: true
-        env:
-          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
-        run: |
-          ACTOR_NAME=$(python3 -c "import json; print(json.load(open('.actor/actor.json'))['name'])")
-          USERNAME=$(curl -s -H "Authorization: Bearer $APIFY_TOKEN" https://api.apify.com/v2/users/me | python3 -c "import sys,json; print(json.loads(sys.stdin.read())['data']['username'])")
-          curl -s -H "Authorization: Bearer $APIFY_TOKEN" \
-            "https://api.apify.com/v2/acts/${USERNAME}~${ACTOR_NAME}" | python3 -c "
-          import sys,json
-          d=json.loads(sys.stdin.read()).get('data',{})
-          fields = ['name','title','description','isPublic','categories','seoTitle','seoDescription','pictureUrl','restartOnError','versions']
-          for f in fields:
-              v = d.get(f, 'NOT SET')
-              if f == 'versions' and isinstance(v, list):
-                  v = f'{len(v)} version(s)'
-              print(f'{f}: {v}')
-          # Show all top-level keys
-          print('ALL KEYS:', sorted(d.keys()))
+              data=d.get('data',{})
+              print('title:', data.get('title','?'))
+              print('description:', data.get('description','NOT SET'))
+              print('seoTitle:', data.get('seoTitle','NOT SET'))
+              print('seoDescription:', data.get('seoDescription','NOT SET'))
+              print('categories:', data.get('categories','?'))
+              print('pictureUrl:', data.get('pictureUrl','NOT SET'))
+              print('ALL KEYS:', sorted(data.keys()))
           "
       - name: Make actor public (needs T&C acceptance in console first)
         id: publish
