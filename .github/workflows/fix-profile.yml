@@ -1,0 +1,72 @@
+name: Fix Apify Profile
+on:
+  workflow_dispatch:
+jobs:
+  fix-profile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check and fix Apify profile
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          echo "=== Step 1: Get current profile info ==="
+          PROFILE=$(curl -s -H "Authorization: Bearer $APIFY_TOKEN" https://api.apify.com/v2/users/me)
+
+          # Show only profile-related fields (no sensitive data)
+          echo "$PROFILE" | python3 -c "
+          import sys, json
+          d = json.loads(sys.stdin.read()).get('data', {})
+          # Only show profile visibility related fields
+          interesting = {k: v for k, v in d.items() if any(word in k.lower() for word in ['public', 'profile', 'visible', 'publish'])}
+          print('Profile-related fields:', json.dumps(interesting, indent=2))
+          print('Username:', d.get('username', 'unknown'))
+          print('All top-level keys:', sorted(d.keys()))
+          "
+
+          echo ""
+          echo "=== Step 2: Attempt to make profile public via PUT /v2/users/me ==="
+          RESULT=$(curl -s -X PUT \
+            -H "Authorization: Bearer $APIFY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"profile": {"isPublic": true}}' \
+            "https://api.apify.com/v2/users/me")
+          echo "PUT with profile.isPublic: $(echo "$RESULT" | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print(d.get('error',{}).get('message','') or 'OK')")"
+
+          echo ""
+          echo "=== Step 3: Try alternative field names ==="
+          for field in '{"isPublic":true}' '{"isProfilePublic":true}' '{"publicProfile":true}'; do
+            RESULT=$(curl -s -X PUT \
+              -H "Authorization: Bearer $APIFY_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "$field" \
+              "https://api.apify.com/v2/users/me")
+            STATUS=$(echo "$RESULT" | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print(d.get('error',{}).get('message','') or 'SUCCESS')")
+            echo "PUT $field => $STATUS"
+          done
+
+          echo ""
+          echo "=== Step 4: Verify final state ==="
+          FINAL=$(curl -s -H "Authorization: Bearer $APIFY_TOKEN" https://api.apify.com/v2/users/me)
+          echo "$FINAL" | python3 -c "
+          import sys, json
+          d = json.loads(sys.stdin.read()).get('data', {})
+          interesting = {k: v for k, v in d.items() if any(word in k.lower() for word in ['public', 'profile', 'visible', 'publish'])}
+          print('Final profile state:', json.dumps(interesting, indent=2))
+          "
+
+          echo ""
+          echo "=== Step 5: Retry making actor public ==="
+          USERNAME=$(curl -s -H "Authorization: Bearer $APIFY_TOKEN" https://api.apify.com/v2/users/me | python3 -c "import sys,json; print(json.loads(sys.stdin.read())['data']['username'])")
+          RESULT=$(curl -s -X PUT \
+            -H "Authorization: Bearer $APIFY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"isPublic": true, "categories": ["LEAD_GENERATION", "ECOMMERCE", "SEO_TOOLS"]}' \
+            "https://api.apify.com/v2/acts/${USERNAME}~trustpilot-review-scraper")
+          echo "$RESULT" | python3 -c "
+          import sys,json
+          d=json.loads(sys.stdin.read())
+          if 'error' in d:
+              print('Actor publish result: ERROR -', d['error'].get('message','unknown'))
+          else:
+              print('Actor publish result: SUCCESS - actor is now public!')
+          "
