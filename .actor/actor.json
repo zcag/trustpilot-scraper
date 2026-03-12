@@ -3,8 +3,8 @@
     "actorSpecification": 1,
     "name": "trustpilot-review-scraper",
     "title": "Trustpilot Review Scraper",
-    "description": "Extract reviews, ratings, and company data from Trustpilot. Fast JSON-based extraction with high reliability.",
-    "version": "0.1",
+    "description": "Scrape Trustpilot reviews, ratings, and company profiles. Extract star ratings, review text, author info, and aggregate statistics. Fast CheerioCrawler with JSON-LD extraction. Perfect for brand monitoring, competitive analysis, and market research.",
+    "version": "0.2",
     "buildTag": "latest",
     "meta": {
         "templateId": "ts-crawlee-cheerio"

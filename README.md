@@ -1,24 +1,47 @@
 # Trustpilot Review Scraper
 
-Extract reviews, ratings, and company profile data from [Trustpilot.com](https://www.trustpilot.com).
+Extract reviews, ratings, and company profile data from [Trustpilot.com](https://www.trustpilot.com) — the world's largest review platform with over 300 million reviews across 1 million+ businesses.
 
-## What it does
+Collect structured review data including star ratings, review text, author information, publication dates, and company-level aggregates. Built for brand monitoring, competitive analysis, and market research at any scale.
 
-This scraper extracts structured data from Trustpilot company review pages:
+## What data can you extract from Trustpilot?
 
-- **Reviews**: rating, title, full text, author name, dates, language
-- **Company profiles**: total reviews, average rating, star distribution
+| Field | Example |
+|-------|---------|
+| Star rating | 1-5 |
+| Review title | "Terrible customer service" |
+| Full review text | Complete review content |
+| Author name | "John D." |
+| Published date | "2026-03-10T14:23:45.000Z" |
+| Language | "en" |
+| Review URL | Direct link to review |
+| Company name | "Amazon" |
+| Company domain | "www.amazon.com" |
+| Total reviews | 44,357 |
+| Average rating | 1.7 |
+| Star distribution | Per-star breakdown |
+
+## How to scrape Trustpilot reviews
+
+1. Click **Try for free** to open the Actor in Apify Console
+2. Enter company domains or Trustpilot URLs (e.g., `www.amazon.com` or `https://www.trustpilot.com/review/www.tesla.com`)
+3. Set the maximum number of reviews per company
+4. Optionally sort by recency or relevance, and filter by star rating
+5. Click **Start** and wait for the run to finish
+6. Download results as JSON, CSV, or Excel — or access via the Apify API
+
+Schedule automatic runs to track review trends over time. Connect to Google Sheets, Slack, Zapier, or webhooks for real-time notifications.
 
 ## Input
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `companyUrls` | string[] | *required* | Trustpilot URLs or domain names (e.g. `www.amazon.com` or `https://www.trustpilot.com/review/www.amazon.com`) |
-| `maxReviewsPerCompany` | number | 100 | Max reviews per company. 0 = unlimited |
-| `sortBy` | string | `recency` | Sort order: `recency` or `relevance` |
-| `filterByStars` | string | `all` | Filter: `all`, `1`, `2`, `3`, `4`, `5` |
-| `includeCompanyInfo` | boolean | `true` | Include company profile as first result |
-| `proxyConfig` | object | Apify Proxy | Proxy settings |
+| Field | Type | Description | Default |
+|-------|------|-------------|---------|
+| `companyUrls` | string[] | Trustpilot URLs or domain names (e.g., `www.amazon.com` or `https://www.trustpilot.com/review/www.tesla.com`) | required |
+| `maxReviewsPerCompany` | number | Max reviews per company. 0 = unlimited. | 100 |
+| `sortBy` | string | `recency` (newest first) or `relevance` | `recency` |
+| `filterByStars` | string | `all`, `1`, `2`, `3`, `4`, or `5` | `all` |
+| `includeCompanyInfo` | boolean | Include company profile with aggregate statistics | true |
+| `proxyConfig` | object | Proxy configuration | Apify Proxy (datacenter) |
 
 ### Example input
 
@@ -37,7 +60,7 @@ This scraper extracts structured data from Trustpilot company review pages:
 
 ## Output
 
-### Review object
+### Review
 
 ```json
 {
@@ -54,7 +77,7 @@ This scraper extracts structured data from Trustpilot company review pages:
 }
 ```
 
-### Company profile object
+### Company profile
 
 ```json
 {
@@ -67,25 +90,46 @@ This scraper extracts structured data from Trustpilot company review pages:
 }
 ```
 
-## How it works
+## How much does it cost to scrape Trustpilot?
 
-1. **JSON-LD extraction**: Reads structured review data from Trustpilot's embedded schema markup (20 reviews per page)
-2. **Automatic pagination**: Follows all review pages up to your `maxReviewsPerCompany` limit
-3. **Proxy rotation**: Uses Apify Proxy to avoid rate limiting
-4. **Multiple companies**: Scrape reviews for many companies in a single run
+This Actor uses CheerioCrawler (HTTP requests only, no browser needed), making it very cost-efficient:
+
+- **~$0.05-0.10 per 1,000 reviews** with datacenter proxy
+
+For example, scraping 10,000 reviews costs roughly $0.50-1.00 in platform usage. The Apify Free plan includes $5/month of credits — enough for tens of thousands of reviews.
 
 ## Use cases
 
-- **Competitor analysis**: Compare review sentiment across competitors
-- **Brand monitoring**: Track how a company's reputation changes over time
-- **Market research**: Analyze customer satisfaction in a specific industry
-- **Review aggregation**: Collect reviews for display on dashboards or reports
+- **Brand monitoring** — Track how your company's Trustpilot rating and review volume change over time. Schedule weekly scrapes and get notified of negative review spikes.
+- **Competitive analysis** — Compare review sentiment, ratings, and complaint types across competitors in your industry.
+- **Market research** — Analyze customer satisfaction patterns before entering a market or launching a product.
+- **Review aggregation** — Collect Trustpilot reviews for internal dashboards, reports, or business intelligence tools.
+- **Sentiment analysis** — Feed structured review data into NLP models. Each review includes the rating, full text, and publication date for time-series analysis.
+- **Due diligence** — Assess a company's customer satisfaction before partnerships, acquisitions, or investments.
 
-## Cost estimate
+## Is it legal to scrape Trustpilot?
 
-Using Apify Proxy (datacenter), scraping ~1,000 reviews costs approximately $0.05-0.10 in platform usage.
+Web scraping of publicly available data is generally legal. Trustpilot reviews are publicly accessible without login. This Actor only collects publicly visible information.
 
-## Limitations
+For more context, see [Is web scraping legal?](https://blog.apify.com/is-web-scraping-legal/) on the Apify blog. Always review applicable terms of service and data protection regulations for your use case.
 
-- Trustpilot may rate-limit requests from the same IP. Use proxy rotation for large scrapes.
-- Review data depends on what Trustpilot exposes publicly. Some reviewer details may be limited.
+## Tips
+
+- **Use domain names as input**: You can enter `www.amazon.com` directly — no need to construct Trustpilot URLs manually.
+- **Start with a small test**: Set `maxReviewsPerCompany: 10` to preview the output format before large runs.
+- **Filter negative reviews**: Use `filterByStars: "1"` to focus on complaints for customer service analysis.
+- **Multi-company runs**: Scrape dozens of companies in a single run for industry-wide analysis.
+
+## Technical details
+
+- Extracts data from Trustpilot's JSON-LD schema markup (20 reviews per page)
+- Automatic pagination through all review pages
+- Proxy rotation to avoid rate limiting
+
+## Related scrapers
+
+Combine with our other review platform scrapers for cross-platform reputation analysis:
+
+- [PissedConsumer Review Scraper](https://apify.com/zcag/pissedconsumer-review-scraper)
+- [SiteJabber Review Scraper](https://apify.com/zcag/sitejabber-review-scraper)
+- [ConsumerAffairs Review Scraper](https://apify.com/zcag/consumeraffairs-review-scraper)
