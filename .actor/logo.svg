@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <rect width="128" height="128" rx="16" fill="#00b67a"/>
+  <text x="64" y="48" text-anchor="middle" font-family="Arial,sans-serif" font-size="40" font-weight="bold" fill="white">TP</text>
+  <g transform="translate(64,80)" fill="#fff">
+    <polygon points="0,-16 4,-5 16,-5 6,2 10,13 0,6 -10,13 -6,2 -16,-5 -4,-5"/>
+  </g>
+</svg>
