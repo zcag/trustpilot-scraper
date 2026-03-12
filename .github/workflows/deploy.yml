@@ -10,3 +10,14 @@ jobs:
       - uses: apify/push-actor-action@v1.0.0
         with:
           token: ${{ secrets.APIFY_TOKEN }}
+      - name: Make actor public
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          ACTOR_NAME=$(python3 -c "import json; print(json.load(open('.actor/actor.json'))['name'])")
+          USERNAME=$(curl -s -H "Authorization: Bearer $APIFY_TOKEN" https://api.apify.com/v2/users/me | python3 -c "import sys,json; print(json.loads(sys.stdin.read())['data']['username'])")
+          curl -s -X PUT \
+            -H "Authorization: Bearer $APIFY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"isPublic": true}' \
+            "https://api.apify.com/v2/acts/${USERNAME}~${ACTOR_NAME}"
