@@ -35,8 +35,10 @@ jobs:
           else:
               print('CATEGORIES SET:', d.get('data',{}).get('categories','unknown'))
           "
-      - name: Make actor public
+      - name: Make actor public (needs T&C acceptance in console first)
+        id: publish
         if: always()
+        continue-on-error: true
         env:
           APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
         run: |
@@ -51,7 +53,8 @@ jobs:
           import sys,json
           d=json.loads(sys.stdin.read())
           if 'error' in d:
-              print('ERROR:', d['error'].get('message','unknown'))
+              print('NOT YET PUBLIC:', d['error'].get('message','unknown'))
+              print('Actor is deployed but not visible in Store. Accept T&C at https://console.apify.com to publish.')
               sys.exit(1)
           else:
               print('SUCCESS: actor is now public')
