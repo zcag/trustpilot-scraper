@@ -1,0 +1,52 @@
+{
+    "$schema": "https://apify.com/schemas/v1/input.ide.json",
+    "title": "Trustpilot Review Scraper",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "companyUrls": {
+            "title": "Company URLs or domains",
+            "type": "array",
+            "description": "Trustpilot review page URLs (e.g. https://www.trustpilot.com/review/example.com) or just domain names (e.g. example.com).",
+            "editor": "stringList",
+            "prefill": ["https://www.trustpilot.com/review/www.amazon.com"]
+        },
+        "maxReviewsPerCompany": {
+            "title": "Max reviews per company",
+            "type": "integer",
+            "description": "Maximum number of reviews to extract per company. Set 0 for unlimited.",
+            "default": 100,
+            "minimum": 0
+        },
+        "sortBy": {
+            "title": "Sort reviews by",
+            "type": "string",
+            "description": "How to sort the reviews.",
+            "editor": "select",
+            "enum": ["recency", "relevance"],
+            "default": "recency"
+        },
+        "filterByStars": {
+            "title": "Filter by star rating",
+            "type": "string",
+            "description": "Only extract reviews with this star rating. 'all' means no filter.",
+            "editor": "select",
+            "enum": ["all", "1", "2", "3", "4", "5"],
+            "default": "all"
+        },
+        "includeCompanyInfo": {
+            "title": "Include company profile info",
+            "type": "boolean",
+            "description": "Include a company profile summary (trust score, total reviews, star distribution) as the first result for each company.",
+            "default": true
+        },
+        "proxyConfig": {
+            "title": "Proxy configuration",
+            "type": "object",
+            "description": "Select proxies to use. Apify Proxy is recommended.",
+            "editor": "proxy",
+            "default": { "useApifyProxy": true }
+        }
+    },
+    "required": ["companyUrls"]
+}

@@ -1,0 +1,17 @@
+{
+    "$schema": "https://apify.com/schemas/v1/actor.ide.json",
+    "actorSpecification": 1,
+    "name": "trustpilot-review-scraper",
+    "title": "Trustpilot Review Scraper",
+    "description": "Extract reviews, ratings, and company data from Trustpilot. Fast JSON-based extraction with high reliability.",
+    "version": "0.1",
+    "buildTag": "latest",
+    "meta": {
+        "templateId": "ts-crawlee-cheerio"
+    },
+    "input": "./input_schema.json",
+    "storages": {
+        "dataset": "./dataset_schema.json"
+    },
+    "dockerfile": "../Dockerfile"
+}

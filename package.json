@@ -1,0 +1,24 @@
+{
+    "name": "trustpilot-review-scraper",
+    "version": "0.1.0",
+    "type": "module",
+    "description": "Apify Actor to scrape reviews, ratings, and company data from Trustpilot.",
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "dependencies": {
+        "apify": "^3.5.2",
+        "@crawlee/cheerio": "^3.15.3"
+    },
+    "devDependencies": {
+        "@apify/tsconfig": "^0.1.1",
+        "tsx": "^4.20.3",
+        "typescript": "^5.9.3"
+    },
+    "scripts": {
+        "start": "npm run start:dev",
+        "start:prod": "node dist/main.js",
+        "start:dev": "tsx src/main.ts",
+        "build": "tsc"
+    }
+}

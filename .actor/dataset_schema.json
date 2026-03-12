@@ -1,0 +1,34 @@
+{
+    "$schema": "https://apify.com/schemas/v1/dataset.ide.json",
+    "actorSpecification": 1,
+    "fields": {},
+    "views": {
+        "reviews": {
+            "title": "Reviews",
+            "transformation": {
+                "fields": [
+                    "companyName",
+                    "rating",
+                    "reviewTitle",
+                    "reviewText",
+                    "authorName",
+                    "publishedDate",
+                    "isVerified"
+                ],
+                "flatten": []
+            },
+            "display": {
+                "component": "table",
+                "properties": {
+                    "companyName": { "label": "Company", "format": "text" },
+                    "rating": { "label": "Stars", "format": "number" },
+                    "reviewTitle": { "label": "Title", "format": "text" },
+                    "reviewText": { "label": "Review", "format": "text" },
+                    "authorName": { "label": "Author", "format": "text" },
+                    "publishedDate": { "label": "Date", "format": "text" },
+                    "isVerified": { "label": "Verified", "format": "boolean" }
+                }
+            }
+        }
+    }
+}
