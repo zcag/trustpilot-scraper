@@ -8,16 +8,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: apify/push-actor-action@v1.0.0
+        id: push
+        continue-on-error: true
         with:
           token: ${{ secrets.APIFY_TOKEN }}
       - name: Make actor public
+        if: always()
         env:
           APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
         run: |
           ACTOR_NAME=$(python3 -c "import json; print(json.load(open('.actor/actor.json'))['name'])")
           USERNAME=$(curl -s -H "Authorization: Bearer $APIFY_TOKEN" https://api.apify.com/v2/users/me | python3 -c "import sys,json; print(json.loads(sys.stdin.read())['data']['username'])")
-          curl -s -X PUT \
+          RESULT=$(curl -s -X PUT \
             -H "Authorization: Bearer $APIFY_TOKEN" \
             -H "Content-Type: application/json" \
             -d '{"isPublic": true, "categories": ["BUSINESS"]}' \
-            "https://api.apify.com/v2/acts/${USERNAME}~${ACTOR_NAME}"
+            "https://api.apify.com/v2/acts/${USERNAME}~${ACTOR_NAME}")
+          echo "$RESULT" | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print('ERROR:', d.get('error',{}).get('message','none')) if 'error' in d else print('SUCCESS: actor is now public')"
