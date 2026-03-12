@@ -22,6 +22,14 @@ jobs:
           RESULT=$(curl -s -X PUT \
             -H "Authorization: Bearer $APIFY_TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{"isPublic": true, "categories": ["BUSINESS"]}' \
+            -d '{"isPublic": true, "categories": ["LEAD_GENERATION", "ECOMMERCE", "SEO_TOOLS"]}' \
             "https://api.apify.com/v2/acts/${USERNAME}~${ACTOR_NAME}")
-          echo "$RESULT" | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print('ERROR:', d.get('error',{}).get('message','none')) if 'error' in d else print('SUCCESS: actor is now public')"
+          echo "$RESULT" | python3 -c "
+          import sys,json
+          d=json.loads(sys.stdin.read())
+          if 'error' in d:
+              print('ERROR:', d['error'].get('message','unknown'))
+              sys.exit(1)
+          else:
+              print('SUCCESS: actor is now public')
+          "

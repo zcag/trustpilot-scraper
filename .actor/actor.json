@@ -2,8 +2,8 @@
     "$schema": "https://apify.com/schemas/v1/actor.ide.json",
     "actorSpecification": 1,
     "name": "trustpilot-review-scraper",
-    "title": "Trustpilot Review Scraper",
-    "description": "Scrape Trustpilot reviews, ratings, and company profiles. Extract star ratings, review text, author info, and aggregate statistics. Fast CheerioCrawler with JSON-LD extraction. Perfect for brand monitoring, competitive analysis, and market research.",
+    "title": "Trustpilot Reviews Scraper API | $0.50/1K Reviews",
+    "description": "Scrape Trustpilot reviews, ratings, and company profiles. Extract star ratings, review text, author info, and aggregate statistics. Fast JSON-LD extraction — no browser needed. Pay only for results: $0.50 per 1,000 reviews. For brand monitoring, competitive analysis, and market research.",
     "version": "0.2",
     "buildTag": "latest",
     "meta": {

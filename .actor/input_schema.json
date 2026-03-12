@@ -45,6 +45,7 @@
             "type": "object",
             "description": "Select proxies to use. Apify Proxy is recommended.",
             "editor": "proxy",
+            "sectionCaption": "Advanced settings",
             "default": { "useApifyProxy": true }
         }
     },

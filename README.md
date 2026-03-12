@@ -120,6 +120,23 @@ For more context, see [Is web scraping legal?](https://blog.apify.com/is-web-scr
 - **Filter negative reviews**: Use `filterByStars: "1"` to focus on complaints for customer service analysis.
 - **Multi-company runs**: Scrape dozens of companies in a single run for industry-wide analysis.
 
+## Why this scraper?
+
+- **JSON-LD extraction** — extracts from Trustpilot's structured data markup, not fragile DOM selectors. More reliable than HTML parsing.
+- **Pay-per-result** — you only pay for reviews extracted ($0.50/1K), not compute time. No reviews = no charge.
+- **No browser needed** — uses CheerioCrawler (HTTP only), so runs are fast and cheap.
+
+## API access
+
+Call this Actor programmatically from any language:
+
+```bash
+curl "https://api.apify.com/v2/acts/quasi_grass~trustpilot-review-scraper/run-sync-get-dataset-items?token=YOUR_TOKEN" \
+  -d '{"companyUrls": ["www.amazon.com"], "maxReviewsPerCompany": 100}'
+```
+
+Or use the [Apify client](https://docs.apify.com/api/client/js/) for Node.js, Python, or any language. Works with Google Sheets, Zapier, Make, Slack, and 100+ integrations.
+
 ## Technical details
 
 - Extracts data from Trustpilot's JSON-LD schema markup (20 reviews per page)
@@ -130,6 +147,6 @@ For more context, see [Is web scraping legal?](https://blog.apify.com/is-web-scr
 
 Combine with our other review platform scrapers for cross-platform reputation analysis:
 
-- [PissedConsumer Review Scraper](https://apify.com/zcag/pissedconsumer-review-scraper)
-- [SiteJabber Review Scraper](https://apify.com/zcag/sitejabber-review-scraper)
-- [ConsumerAffairs Review Scraper](https://apify.com/zcag/consumeraffairs-review-scraper)
+- [PissedConsumer Reviews Scraper](https://apify.com/quasi_grass/pissedconsumer-review-scraper)
+- [SiteJabber Reviews Scraper](https://apify.com/quasi_grass/sitejabber-review-scraper)
+- [ConsumerAffairs Reviews Scraper](https://apify.com/quasi_grass/consumeraffairs-review-scraper)
